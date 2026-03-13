@@ -1,36 +1,59 @@
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
+const PORT = process.env.PORT || 3001;
+
 app.use(cors());
 app.use(express.json());
 
-function calculateSafetyScore(route) {
-    let score = 100;
-    const dangerZonePenalty = route.passesThroughDangerZone ? 30 : 0;
-    const mainRoadBonus = route.isMainRoad ? 20 : 0;
-    const safeHavenBonus = route.openBusinessesCount * 5;
-    score = score - dangerZonePenalty + mainRoadBonus + safeHavenBonus;
-    return Math.min(score, 100);
-}
+app.post("/api/get-safe-routes", async (req, res) => {
+  const { origin, destination } = req.body;
 
-app.post('/api/get-safe-routes', async (req, res) => {
-    const { origin, destination } = req.body;
-    const mockRoutes = [
-        { id: 'A', name: 'Main St Route', distance: '2.1 mi', time: '45 mins', isMainRoad: true, passesThroughDangerZone: false, openBusinessesCount: 3 },
-        { id: 'B', name: 'Park Shortcut', distance: '1.5 mi', time: '30 mins', isMainRoad: false, passesThroughDangerZone: true, openBusinessesCount: 0 },
-        { id: 'C', name: 'Avenue Route', distance: '2.3 mi', time: '50 mins', isMainRoad: true, passesThroughDangerZone: false, openBusinessesCount: 1 }
+  try {
+
+    // Simulate route calculation
+    const routes = [
+      {
+        name: `Main Road Route`,
+        safetyScore: Math.floor(Math.random() * 20) + 80,
+        distance: (Math.random() * 3 + 1).toFixed(1) + " km",
+        time: Math.floor(Math.random() * 20 + 20) + " mins",
+        features: "Well lit roads • Shops nearby"
+      },
+      {
+        name: `City Avenue Route`,
+        safetyScore: Math.floor(Math.random() * 30) + 60,
+        distance: (Math.random() * 3 + 1).toFixed(1) + " km",
+        time: Math.floor(Math.random() * 25 + 20) + " mins",
+        features: "Wide streets • CCTV areas"
+      },
+      {
+        name: `Park Shortcut`,
+        safetyScore: Math.floor(Math.random() * 40) + 40,
+        distance: (Math.random() * 2 + 1).toFixed(1) + " km",
+        time: Math.floor(Math.random() * 15 + 15) + " mins",
+        features: "Side streets • Low lighting"
+      }
     ];
 
-    const scoredRoutes = mockRoutes.map(route => {
-        return { ...route, safetyScore: calculateSafetyScore(route) };
+    res.json({
+      origin,
+      destination,
+      routes
     });
 
-    scoredRoutes.sort((a, b) => b.safetyScore - a.safetyScore);
-    res.json({ routes: scoredRoutes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error generating routes" });
+  }
 });
 
-const PORT = 3001;
+app.get("/", (req, res) => {
+  res.send("SafeRoute API running");
+});
+
 app.listen(PORT, () => {
-    console.log(`Safety Routing API is running on http://localhost:${PORT}`);
+  console.log(`Safety Routing API running on port ${PORT}`);
 });
